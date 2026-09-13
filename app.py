@@ -332,42 +332,101 @@ def get_template_explanation(category):
     })
 
 
-def explain_with_gemini(clause_text, detected_categories):
-    api_key = os.getenv("GEMINI_API_KEY")
+def get_gemini_client():
+    """
+    Creates a Gemini client using the API key stored securely
+    in Streamlit Secrets.
 
-    if not GEMINI_AVAILABLE or not api_key:
+    Returns None if Gemini is unavailable or no API key exists.
+    """
+    if not GEMINI_AVAILABLE:
         return None
 
     try:
-        genai.configure(api_key=api_key)
-        model_gemini = genai.GenerativeModel("gemini-1.5-flash")
+        api_key = st.secrets["GEMINI_API_KEY"]
+    except Exception:
+        api_key = os.getenv("GEMINI_API_KEY")
 
-        prompt = f"""
-You are assisting a legal transparency tool called FinePrint.
+    if not api_key:
+        return None
 
-A Terms-of-Service clause has been detected with these clause categories:
-{', '.join(detected_categories)}
+    try:
+        return genai.Client(api_key=api_key)
+    except Exception:
+        return None
 
-Clause:
+
+def explain_with_gemini(clause_text, detected_categories):
+    """
+    Uses Gemini to explain a FinePrint-detected clause
+    in plain language.
+
+    Falls back gracefully if the API is unavailable.
+    """
+
+    client = get_gemini_client()
+
+    if client is None:
+        return None
+
+    categories_text = ", ".join(detected_categories)
+
+    prompt = f"""
+You are the Generative AI explanation layer of a contract-transparency
+application called FinePrint.
+
+FinePrint's trained machine-learning classifier detected the following
+Terms-of-Service clause categories:
+
+{categories_text}
+
+ORIGINAL CLAUSE:
 \"\"\"{clause_text}\"\"\"
 
-Explain this in simple, clear language for a non-lawyer.
-Return the answer in this format:
+Your job is NOT to decide whether the clause is illegal, enforceable,
+valid, or legally unfair.
 
-1. Simple meaning:
-2. Why this matters:
-3. Questions to consider:
-- ...
-- ...
-- ...
+Instead, help an ordinary non-lawyer understand what the clause appears
+to mean and what they may want to pay attention to.
 
-Keep it concise, easy to understand, and do NOT provide legal advice.
+Return a concise response using EXACTLY these headings:
+
+### Simple Meaning
+Explain the clause in 2-3 simple sentences.
+
+### Why It Matters
+Explain the practical significance to a user in 2-3 sentences.
+
+### Questions to Consider
+Provide exactly 3 useful questions the user may want to investigate
+before accepting the agreement.
+
+### Roman Urdu
+Explain the clause naturally in simple Roman Urdu in 2-3 sentences.
+
+Do not:
+- provide legal advice
+- say the clause is illegal
+- say the user should or should not sign
+- invent facts not contained in the clause
+- make claims about Pakistani, US, EU, or other law unless explicitly
+  stated in the clause
+
+Keep the entire response concise.
 """
 
-        response = model_gemini.generate_content(prompt)
-        return response.text.strip()
+    try:
+        response = client.models.generate_content(
+            model="gemini-3.8-flash",
+            contents=prompt
+        )
 
-    except Exception:
+        if response and response.text:
+            return response.text.strip()
+
+        return None
+
+    except Exception as e:
         return None
 
 
@@ -409,13 +468,24 @@ with st.sidebar:
 - Supports Roman Urdu guidance
 """)
     st.markdown("---")
-    st.markdown("### Model")
-    st.markdown("""
-**Baseline:** TF-IDF + One-vs-Rest Logistic Regression  
-**Final Test Performance:**  
+   st.markdown("### Hybrid AI Architecture")
+
+st.markdown("""
+**Clause Detection:**  
+TF-IDF + One-vs-Rest Logistic Regression
+
+**Generative AI:**  
+Gemini 3.8 Flash
+
+**Final ML Test Performance:**  
 - **Micro F1:** 0.7313  
 - **Macro F1:** 0.7442
 """)
+
+if get_gemini_client() is not None:
+    st.success("Generative AI: Connected")
+else:
+    st.warning("Generative AI: Template fallback mode")
     st.markdown("---")
     st.info("FinePrint is an informational transparency tool and does not provide legal advice.")
 
