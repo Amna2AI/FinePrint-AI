@@ -8,13 +8,12 @@ import numpy as np
 import pandas as pd
 from PyPDF2 import PdfReader
 
-# Optional Gemini support
+# Optional Gemini Generative AI support
 try:
-    import google.generativeai as genai
+    from google import genai
     GEMINI_AVAILABLE = True
-except:
+except ImportError:
     GEMINI_AVAILABLE = False
-
 
 # ---------------------------------------------------
 # PAGE CONFIG
