@@ -451,44 +451,52 @@ def roman_urdu_explanation(categories):
             lines.append("Yeh clause kehta hai ke dispute court ke bajaye arbitration ke zariye solve ho sakta hai.")
     return " ".join(lines)
 
-
 # ---------------------------------------------------
 # APP SIDEBAR
 # ---------------------------------------------------
 with st.sidebar:
     st.markdown("## ⚖️ FinePrint")
     st.markdown("**Understand before you agree.**")
+
     st.markdown("---")
+
     st.markdown("### What FinePrint does")
+
     st.markdown("""
-- Detects potentially concerning Terms-of-Service clauses  
-- Classifies them into clause categories  
-- Explains them in simple language  
-- Provides helpful follow-up questions  
+- Detects potentially concerning Terms-of-Service clauses
+- Classifies them into clause categories
+- Explains them in simple language
+- Provides helpful follow-up questions
 - Supports Roman Urdu guidance
 """)
-    st.markdown("---")
-   st.markdown("### Hybrid AI Architecture")
 
-st.markdown("""
+    st.markdown("---")
+
+    st.markdown("### Hybrid AI Architecture")
+
+    st.markdown("""
 **Clause Detection:**  
 TF-IDF + One-vs-Rest Logistic Regression
 
 **Generative AI:**  
-Gemini 3.8 Flash
+Gemini
 
 **Final ML Test Performance:**  
-- **Micro F1:** 0.7313  
+- **Micro F1:** 0.7313
 - **Macro F1:** 0.7442
 """)
 
-if get_gemini_client() is not None:
-    st.success("Generative AI: Connected")
-else:
-    st.warning("Generative AI: Template fallback mode")
-    st.markdown("---")
-    st.info("FinePrint is an informational transparency tool and does not provide legal advice.")
+    if get_gemini_client() is not None:
+        st.success("Generative AI: Connected")
+    else:
+        st.warning("Generative AI: Template fallback mode")
 
+    st.markdown("---")
+
+    st.info(
+        "FinePrint is an informational contract-transparency tool "
+        "and does not provide legal advice."
+    )
 
 # ---------------------------------------------------
 # HERO SECTION
